@@ -1,0 +1,575 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algorithm Visualizer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #0d1117;
+    --card:    #161b22;
+    --card2:   #1c2333;
+    --border:  #30363d;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --c-unsorted:   #3b82f6;
+    --c-comparing:  #f59e0b;
+    --c-swapping:   #ef4444;
+    --c-pivot:      #a855f7;
+    --c-sorted:     #22c55e;
+    --c-notchecked: #374151;
+    --c-searchspace:#3b82f6;
+    --c-checking:   #f59e0b;
+    --c-eliminated: #ef4444;
+    --c-found:      #22c55e;
+  }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  button, input, select { font-family: inherit; cursor: pointer; }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; }
+
+  /* ── HOME ── */
+  #home {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 60px 24px;
+  }
+  .home-title {
+    font-size: clamp(2.2rem, 7vw, 4rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    text-align: center; margin-bottom: 14px; letter-spacing: -0.5px;
+  }
+  .home-sub { color: var(--muted); font-size: 1.05rem; text-align: center; margin-bottom: 52px; }
+  .home-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap: 18px; width: 100%; max-width: 720px;
+  }
+  .home-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px; cursor: pointer;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+  }
+  .home-card:hover { border-color: #555; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+  .home-card-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 16px;
+  }
+  .icon-sort   { background: linear-gradient(135deg,#3b82f6,#06b6d4); }
+  .icon-search { background: linear-gradient(135deg,#a855f7,#ec4899); }
+  .home-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+  .home-card p  { color: var(--muted); font-size: .88rem; line-height: 1.55; }
+
+  /* ── VIZ PAGES ── */
+  .viz-top { position: relative; text-align: center; padding: 28px 24px 16px; }
+  .back-btn {
+    position: absolute; left: 24px; top: 28px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    font-size: .82rem; transition: all .2s;
+  }
+  .back-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .viz-title {
+    font-size: 1.75rem; font-weight: 700;
+    background: linear-gradient(135deg,#818cf8,#c084fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    display: inline-block;
+  }
+  .viz-body { max-width: 1080px; margin: 0 auto; padding: 0 20px 40px; }
+
+  /* ── CONTROLS ROW ── */
+  .ctrl-row {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 18px; display: flex; align-items: center; gap: 18px;
+    flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .ctrl-grp { display: flex; align-items: center; gap: 8px; }
+  .ctrl-lbl { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  .ctrl-sel {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 6px 9px; font-size: .85rem; outline: none; cursor: pointer;
+  }
+  .ctrl-sel:focus { border-color: #58a6ff; }
+  .ctrl-num {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); padding: 6px 9px; font-size: .85rem; width: 78px; outline: none;
+  }
+  .ctrl-num:focus { border-color: #58a6ff; }
+  input[type=range] {
+    -webkit-appearance: none; width: 90px; height: 4px;
+    background: #374151; border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #58a6ff; box-shadow: 0 0 5px rgba(88,166,255,.6);
+  }
+  .rng-val { color: var(--text); font-size: .85rem; min-width: 24px; }
+  .gen-btn {
+    background: #1d4ed8; border: none; color: #fff;
+    padding: 7px 16px; border-radius: 6px; font-size: .85rem; font-weight: 600;
+    transition: background .2s; margin-left: auto;
+  }
+  .gen-btn:hover { background: #2563eb; }
+
+  .note { color: #f59e0b; font-size: .78rem; min-height: 18px; margin-bottom: 8px; }
+
+  /* ── PLAYBACK ── */
+  .pb-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .pb-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem; transition: transform .15s, filter .15s;
+  }
+  .pb-btn:hover { transform: scale(1.1); filter: brightness(1.15); }
+  .pb-btn:active { transform: scale(.94); }
+  .pb-btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+  .pb-home  { background: #374151; color: var(--text); }
+  .pb-play  { background: #16a34a; color: #fff; }
+  .pb-step  { background: #1d4ed8; color: #fff; }
+  .pb-reset { background: #dc2626; color: #fff; }
+  .spd-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
+  input[type=range].spd-rng { width: 110px; }
+
+  /* ── SORT CANVAS ── */
+  .canvas-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  #sort-canvas { display: block; width: 100%; border-radius: 4px; }
+
+  /* ── SEARCH GRID ── */
+  .search-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-bottom: 14px; min-height: 160px;
+  }
+  .s-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .s-cell {
+    background: var(--c-notchecked); border-radius: 8px;
+    width: 62px; padding: 5px 3px 8px; text-align: center;
+    transition: background .22s, transform .2s, box-shadow .2s; flex-shrink: 0;
+  }
+  .s-cell .cidx { font-size: .62rem; color: rgba(255,255,255,.45); margin-bottom: 3px; }
+  .s-cell .cval { font-size: 1.1rem; font-weight: 700; color: #fff; }
+  .s-cell.ss { background: var(--c-searchspace); }
+  .s-cell.chk { background: var(--c-checking); transform: translateY(-4px); box-shadow: 0 4px 14px rgba(245,158,11,.5); }
+  .s-cell.elim { background: var(--c-eliminated); opacity: .45; }
+  .s-cell.found { background: var(--c-found); transform: translateY(-6px) scale(1.08); box-shadow: 0 6px 18px rgba(34,197,94,.55); }
+
+  .s-result { text-align: center; padding: 14px 0 2px; }
+  .s-result .tgt-line { font-size: .95rem; margin-bottom: 5px; }
+  .s-result .tgt-num  { color: #f85149; font-weight: 700; }
+  .s-result .r-text   { font-size: .9rem; font-weight: 600; min-height: 22px; }
+  .r-found    { color: #3fb950; }
+  .r-notfound { color: #f85149; }
+
+  /* ── LEGEND ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; padding: 6px 0; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: var(--muted); }
+  .leg-dot  { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════ HOME ════════ -->
+<div id="home" class="page" style="display:flex">
+  <h1 class="home-title">Algorithm Visualizer</h1>
+  <p class="home-sub">Interactive visualizations to understand how algorithms work</p>
+  <div class="home-cards">
+    <div class="home-card" onclick="goSort()">
+      <div class="home-card-icon icon-sort">📊</div>
+      <h3>Sorting Algorithms</h3>
+      <p>Visualize how sorting algorithms organize data step by step</p>
+    </div>
+    <div class="home-card" onclick="goSearch()">
+      <div class="home-card-icon icon-search">🔍</div>
+      <h3>Searching Algorithms</h3>
+      <p>Watch searching algorithms find target values in datasets</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SORT PAGE ════════ -->
+<div id="sort-page" class="page">
+  <div class="viz-top">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <span class="viz-title">Sorting Visualizer</span>
+  </div>
+  <div class="viz-body">
+    <div class="ctrl-row">
+      <div class="ctrl-grp">
+        <span class="ctrl-lbl">Algorithm:</span>
+        <select class="ctrl-sel" id="sort-algo-sel" onchange="sortAlgoChange()">
+          <option value="bubble">Bubble Sort</option>
+          <option value="selection">Selection Sort</option>
+          <option value="insertion">Insertion Sort</option>
+          <option value="merge">Merge Sort</option>
+        </select>
+      </div>
+      <div class="ctrl-grp">
+        <span class="ctrl-lbl">Array Size:</span>
+        <input type="range" id="sort-sz" min="10" max="100" value="50" oninput="$('sort-sz-v').textContent=this.value" />
+        <span class="rng-val" id="sort-sz-v">50</span>
+      </div>
+      <button class="gen-btn" onclick="sortGen()">Generate New Array</button>
+    </div>
+
+    <div class="pb-row">
+      <button class="pb-btn pb-home"  onclick="sortPbHome()"  title="Home">🏠</button>
+      <button class="pb-btn pb-play"  id="sort-play-btn" onclick="sortToggle()" title="Play">▶</button>
+      <button class="pb-btn pb-step"  onclick="sortStep()"   title="Step">⏭</button>
+      <button class="pb-btn pb-reset" onclick="sortRewind()" title="Reset">↺</button>
+      <div class="spd-wrap">
+        <span>Speed:</span>
+        <input type="range" class="spd-rng" id="sort-spd" min="1" max="10" value="5"
+               oninput="$('sort-spd-v').textContent=this.value+'x'" />
+        <span class="rng-val" id="sort-spd-v">5x</span>
+      </div>
+    </div>
+
+    <div class="canvas-box">
+      <canvas id="sort-canvas" height="340"></canvas>
+    </div>
+
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-unsorted)"></div>Unsorted</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-comparing)"></div>Comparing</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-swapping)"></div>Swapping</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-pivot)"></div>Pivot</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-sorted)"></div>Sorted</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SEARCH PAGE ════════ -->
+<div id="search-page" class="page">
+  <div class="viz-top">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <span class="viz-title">Searching Visualizer</span>
+  </div>
+  <div class="viz-body">
+    <div class="ctrl-row">
+      <div class="ctrl-grp">
+        <span class="ctrl-lbl">Algorithm:</span>
+        <select class="ctrl-sel" id="srch-algo-sel" onchange="srchAlgoChange()">
+          <option value="linear">Linear Search</option>
+          <option value="binary">Binary Search</option>
+        </select>
+      </div>
+      <div class="ctrl-grp">
+        <span class="ctrl-lbl">Array Size:</span>
+        <input type="range" id="srch-sz" min="5" max="40" value="30" oninput="$('srch-sz-v').textContent=this.value" />
+        <span class="rng-val" id="srch-sz-v">30</span>
+      </div>
+      <div class="ctrl-grp">
+        <span class="ctrl-lbl">Target:</span>
+        <input type="number" class="ctrl-num" id="srch-tgt-inp" placeholder="auto" />
+      </div>
+      <button class="gen-btn" onclick="srchGen()">Generate New Array</button>
+    </div>
+
+    <div class="note" id="srch-note"></div>
+
+    <div class="pb-row">
+      <button class="pb-btn pb-home"  onclick="srchPbHome()"  title="Home">🏠</button>
+      <button class="pb-btn pb-play"  id="srch-play-btn" onclick="srchToggle()" title="Play">▶</button>
+      <button class="pb-btn pb-step"  onclick="srchStep()"    title="Step">⏭</button>
+      <button class="pb-btn pb-reset" onclick="srchRewind()"  title="Reset">↺</button>
+      <div class="spd-wrap">
+        <span>Speed:</span>
+        <input type="range" class="spd-rng" id="srch-spd" min="1" max="10" value="5"
+               oninput="$('srch-spd-v').textContent=this.value+'x'" />
+        <span class="rng-val" id="srch-spd-v">5x</span>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <div class="s-grid" id="srch-grid"></div>
+      <div class="s-result">
+        <div class="tgt-line">Target: <span class="tgt-num" id="srch-tgt-disp">—</span></div>
+        <div class="r-text" id="srch-r-text"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-notchecked)"></div>Not Checked</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-searchspace)"></div>Search Space</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-checking)"></div>Checking</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-eliminated)"></div>Eliminated</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-found)"></div>Found</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── helpers ─── */
+const $ = id => document.getElementById(id);
+function delay(ms) { return new Promise(r => setTimeout(r,ms)); }
+function spd() { return Math.round(560 / (parseInt($('sort-spd').value) * 1.8)); }
+function sspd() { return Math.round(560 / (parseInt($('srch-spd').value) * 1.8)); }
+
+/* ─── page nav ─── */
+function showOnly(id) {
+  ['home','sort-page','search-page'].forEach(p => {
+    const el = $(p);
+    el.style.display = 'none';
+    el.classList.remove('page');
+  });
+  const el = $(id);
+  el.style.display = id === 'home' ? 'flex' : 'block';
+}
+function goHome()   { sortHalt(); srchHalt(); showOnly('home'); }
+function goSort()   { showOnly('sort-page'); if(!SS.init){SS.init=true;sortGen();}else drawSort(SS.frames[SS.idx]||{arr:SS.arr,hi:{}}); }
+function goSearch() { showOnly('search-page'); if(!SE.init){SE.init=true;srchGen();}else renderSrch(SE.frames[SE.idx]); }
+
+/* ══════════════════════════════════════════════
+   SORT
+══════════════════════════════════════════════ */
+const SS = { arr:[], frames:[], idx:0, playing:false, timer:null, init:false };
+
+/* ─── frame generators ─── */
+function bblFrames(a){
+  a=[...a];const n=a.length,F=[],S=new Set();
+  for(let i=0;i<n-1;i++){
+    for(let j=0;j<n-i-1;j++){
+      F.push({arr:[...a],hi:{t:'cmp',i:[j,j+1],s:[...S]}});
+      if(a[j]>a[j+1]){[a[j],a[j+1]]=[a[j+1],a[j]];F.push({arr:[...a],hi:{t:'swp',i:[j,j+1],s:[...S]}});}
+    }
+    S.add(n-1-i);
+  }
+  S.add(0);
+  F.push({arr:[...a],hi:{t:'done',s:[...Array.from({length:n},(_,i)=>i)]}});
+  return F;
+}
+function selFrames(a){
+  a=[...a];const n=a.length,F=[],S=new Set();
+  for(let i=0;i<n;i++){
+    let m=i;
+    for(let j=i+1;j<n;j++){F.push({arr:[...a],hi:{t:'cmp',i:[m,j],p:m,s:[...S]}});if(a[j]<a[m])m=j;}
+    if(m!==i){[a[i],a[m]]=[a[m],a[i]];F.push({arr:[...a],hi:{t:'swp',i:[i,m],s:[...S]}});}
+    S.add(i);F.push({arr:[...a],hi:{t:'mark',s:[...S]}});
+  }
+  F.push({arr:[...a],hi:{t:'done',s:[...Array.from({length:n},(_,i)=>i)]}});return F;
+}
+function insFrames(a){
+  a=[...a];const n=a.length,F=[],S=new Set([0]);
+  for(let i=1;i<n;i++){
+    let j=i;
+    while(j>0){
+      F.push({arr:[...a],hi:{t:'cmp',i:[j-1,j],s:[...S]}});
+      if(a[j]<a[j-1]){[a[j],a[j-1]]=[a[j-1],a[j]];j--;F.push({arr:[...a],hi:{t:'swp',i:[j,j+1],s:[...S]}});}
+      else break;
+    }
+    S.add(i);
+  }
+  F.push({arr:[...a],hi:{t:'done',s:[...Array.from({length:n},(_,i)=>i)]}});return F;
+}
+function mrgFrames(a){
+  a=[...a];const n=a.length,F=[],S=new Set();
+  function mg(ar,lo,mid,hi){
+    const L=ar.slice(lo,mid+1),R=ar.slice(mid+1,hi+1);
+    let i=0,j=0,k=lo;
+    while(i<L.length&&j<R.length){
+      F.push({arr:[...ar],hi:{t:'cmp',i:[lo+i,mid+1+j],s:[...S]}});
+      ar[k++]=(L[i]<=R[j])?L[i++]:R[j++];
+      F.push({arr:[...ar],hi:{t:'swp',i:[k-1],s:[...S]}});
+    }
+    while(i<L.length){ar[k++]=L[i++];F.push({arr:[...ar],hi:{t:'swp',i:[k-1],s:[...S]}});}
+    while(j<R.length){ar[k++]=R[j++];F.push({arr:[...ar],hi:{t:'swp',i:[k-1],s:[...S]}});}
+    for(let x=lo;x<=hi;x++)S.add(x);
+  }
+  function ms(ar,lo,hi){if(lo>=hi){S.add(lo);return;}const mid=Math.floor((lo+hi)/2);ms(ar,lo,mid);ms(ar,mid+1,hi);mg(ar,lo,mid,hi);}
+  ms(a,0,n-1);
+  F.push({arr:[...a],hi:{t:'done',s:[...Array.from({length:n},(_,i)=>i)]}});return F;
+}
+const sortFns = {
+  bubble:bblFrames,selection:selFrames,insertion:insFrames,merge:mrgFrames
+};
+
+/* ─── draw ─── */
+function drawSort(frame){
+  const cv=$('sort-canvas'),ctx=cv.getContext('2d');
+  const W=cv.offsetWidth; cv.width=W; cv.height=340;
+  const arr=frame.arr,hi=frame.hi||{},n=arr.length;
+  const mx=Math.max(...arr,1),gap=n>60?1:2;
+  const bw=Math.max(2,(W-gap*(n+1))/n);
+  const H=340,pt=8,pb=4;
+  ctx.clearRect(0,0,W,H);
+  const SS2=new Set(hi.s||[]),CS=new Set(hi.t==='cmp'?(hi.i||[]):[]),SW=new Set(hi.t==='swp'?(hi.i||[]):[]);
+  arr.forEach((v,i)=>{
+    const bh=Math.max(2,((v/mx)*(H-pt-pb)));
+    const x=gap+i*(bw+gap),y=H-pb-bh;
+    let c='#3b82f6';
+    if(SS2.has(i))c='#22c55e';
+    if(CS.has(i))c='#f59e0b';
+    if(SW.has(i))c='#ef4444';
+    if(hi.p===i)c='#a855f7';
+    ctx.fillStyle=c;
+    ctx.beginPath();ctx.roundRect(x,y,bw,bh,[2,2,0,0]);ctx.fill();
+  });
+}
+
+/* ─── controls ─── */
+function sortGen(){
+  sortHalt();
+  const n=parseInt($('sort-sz').value);
+  SS.arr=Array.from({length:n},()=>Math.floor(Math.random()*95)+5);
+  const algo=$('sort-algo-sel').value;
+  SS.frames=sortFns[algo]([...SS.arr]);
+  SS.idx=0;
+  drawSort(SS.frames[0]);
+  setPlayBtn('sort',true);
+}
+function sortAlgoChange(){sortGen();}
+function sortToggle(){SS.playing?sortHalt():sortRun();}
+function sortRun(){
+  if(SS.idx>=SS.frames.length-1)SS.idx=0;
+  SS.playing=true;setPlayBtn('sort',false);
+  function tick(){
+    if(!SS.playing)return;
+    if(SS.idx>=SS.frames.length-1){SS.playing=false;setPlayBtn('sort',true);return;}
+    SS.idx++;drawSort(SS.frames[SS.idx]);
+    SS.timer=setTimeout(tick,spd());
+  }
+  tick();
+}
+function sortHalt(){SS.playing=false;clearTimeout(SS.timer);setPlayBtn('sort',true);}
+function sortStep(){sortHalt();if(SS.idx<SS.frames.length-1){SS.idx++;drawSort(SS.frames[SS.idx]);}}
+function sortRewind(){sortHalt();SS.idx=0;drawSort(SS.frames[0]);}
+function sortPbHome(){sortHalt();goHome();}
+
+/* ══════════════════════════════════════════════
+   SEARCH
+══════════════════════════════════════════════ */
+const SE = { arr:[], frames:[], idx:0, playing:false, timer:null, init:false, target:null };
+
+/* ─── frame generators ─── */
+function buildSrchFrames(arr,target,algo){
+  const n=arr.length,F=[],st=arr.map(()=>'');
+  const push=(result=null)=>F.push({states:[...st],target,result});
+
+  // reset
+  st.fill('');
+  push();
+
+  if(algo==='linear'){
+    for(let i=0;i<n;i++){
+      st[i]='chk';push();
+      if(arr[i]===target){st[i]='found';push('found:'+i);return F;}
+      st[i]='elim';push();
+    }
+    push('notfound');
+
+  }else if(algo==='binary'){
+    let lo=0,hi=n-1;
+    for(let i=0;i<n;i++)st[i]='ss';push();
+    while(lo<=hi){
+      const mid=Math.floor((lo+hi)/2);
+      st[mid]='chk';push();
+      if(arr[mid]===target){st[mid]='found';push('found:'+mid);return F;}
+      else if(arr[mid]<target){for(let i=lo;i<=mid;i++)st[i]='elim';lo=mid+1;}
+      else{for(let i=mid;i<=hi;i++)st[i]='elim';hi=mid-1;}
+      push();
+    }
+    push('notfound');
+
+  }
+  return F;
+}
+
+/* ─── render ─── */
+function renderSrch(frame){
+  const grid=$('srch-grid'),arr=SE.arr,n=arr.length;
+  $('srch-tgt-disp').textContent=frame.target;
+  // rebuild if needed
+  if(grid.children.length!==n){
+    grid.innerHTML='';
+    arr.forEach((v,i)=>{
+      const c=document.createElement('div');
+      c.className='s-cell';
+      c.innerHTML=`<div class="cidx">idx: ${i}</div><div class="cval">${v}</div>`;
+      grid.appendChild(c);
+    });
+  }
+  const cells=grid.querySelectorAll('.s-cell');
+  const MAP={'':`s-cell`,'ss':'s-cell ss','chk':'s-cell chk','elim':'s-cell elim','found':'s-cell found'};
+  cells.forEach((c,i)=>c.className=MAP[frame.states[i]||'']||'s-cell');
+  // result
+  const rt=$('srch-r-text');
+  if(!frame.result){rt.textContent='';rt.className='r-text';}
+  else if(frame.result==='notfound'){rt.textContent='Target not found';rt.className='r-text r-notfound';}
+  else if(frame.result.startsWith('found:')){rt.textContent='Found at index '+frame.result.split(':')[1]+'!';rt.className='r-text r-found';}
+}
+
+/* ─── controls ─── */
+function srchGen(){
+  srchHalt();
+  const n=parseInt($('srch-sz').value);
+  const algo=$('srch-algo-sel').value;
+  const needSort=algo!=='linear';
+  let arr=Array.from({length:n},()=>Math.floor(Math.random()*98)+1);
+  if(needSort)arr.sort((a,b)=>a-b);
+  SE.arr=arr;
+  let tgtIn=$('srch-tgt-inp').value;
+  let target=tgtIn&&!isNaN(parseInt(tgtIn))?parseInt(tgtIn):(Math.random()<0.8?arr[Math.floor(Math.random()*n)]:Math.floor(Math.random()*100)+1);
+  SE.target=target;
+  $('srch-tgt-disp').textContent=target;
+  // rebuild grid
+  const grid=$('srch-grid');
+  grid.innerHTML='';
+  arr.forEach((v,i)=>{
+    const c=document.createElement('div');c.className='s-cell';
+    c.innerHTML=`<div class="cidx">idx: ${i}</div><div class="cval">${v}</div>`;
+    grid.appendChild(c);
+  });
+  SE.frames=buildSrchFrames([...arr],target,algo);
+  SE.idx=0;
+  renderSrch(SE.frames[0]);
+  setPlayBtn('srch',true);
+  updateNote(algo);
+}
+function srchAlgoChange(){srchGen();}
+function srchToggle(){SE.playing?srchHalt():srchRun();}
+function srchRun(){
+  if(SE.idx>=SE.frames.length-1)SE.idx=0;
+  SE.playing=true;setPlayBtn('srch',false);
+  function tick(){
+    if(!SE.playing)return;
+    if(SE.idx>=SE.frames.length-1){SE.playing=false;setPlayBtn('srch',true);return;}
+    SE.idx++;renderSrch(SE.frames[SE.idx]);
+    SE.timer=setTimeout(tick,sspd());
+  }
+  tick();
+}
+function srchHalt(){SE.playing=false;clearTimeout(SE.timer);setPlayBtn('srch',true);}
+function srchStep(){srchHalt();if(SE.idx<SE.frames.length-1){SE.idx++;renderSrch(SE.frames[SE.idx]);}}
+function srchRewind(){srchHalt();SE.idx=0;renderSrch(SE.frames[0]);}
+function srchPbHome(){srchHalt();goHome();}
+function updateNote(algo){
+  $('srch-note').textContent=algo==='binary'?'Note: Array is automatically sorted for Binary Search':'';
+}
+
+/* ─── shared util ─── */
+function setPlayBtn(pfx,isPlay){
+  const btn=$(pfx==='sort'?'sort-play-btn':'srch-play-btn');
+  btn.textContent=isPlay?'▶':'⏸';
+  btn.style.background=isPlay?'#16a34a':'#d97706';
+}
+
+/* ─── resize sort canvas ─── */
+window.addEventListener('resize',()=>{
+  if($('sort-page').style.display!=='none'&&SS.frames.length){
+    drawSort(SS.frames[SS.idx]);
+  }
+});
+</script>
+</body>
+</html>
