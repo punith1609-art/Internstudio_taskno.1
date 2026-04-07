@@ -1,29 +1,76 @@
-# AI Fraud Detection System
-Overview
-The AI Fraud Detection System is designed to identify suspicious and potentially fraudulent transactions using machine learning techniques. The system analyzes user behavior and transaction patterns to detect anomalies in real-time.
+# AlgoViz — Algorithm Visualizer
 
-Features
-- Detects fraudulent transactions using anomaly detection techniques  
-- Data preprocessing and feature engineering for improved accuracy  
-- Real-time analysis of transaction data  
-- Clean and intuitive interface for monitoring suspicious activities  
+An interactive, dark-themed algorithm visualizer with step-by-step animations for all major sorting and searching algorithms.
 
-Tech Stack
-- Python  
-- FastAPI  
-- Machine Learning (Scikit-learn)  
-- Pandas, NumPy  
+## 🚀 Quick Start
 
-How It Works
-The system processes transaction data and applies machine learning models to identify unusual patterns. It compares current behavior with historical data to flag anomalies that may indicate fraud.
+```bash
+python3 server.py
+```
 
-Future Improvements
-- Integration with live transaction APIs  
-- Advanced deep learning models for higher accuracy  
-- Real-time alert system (Email/SMS)  
-- Dashboard for data visualization  
+Then open [http://localhost:8080](http://localhost:8080) in your browser.  
+*(The browser opens automatically.)*
 
-Use Cases
-- Banking & Financial Systems  
-- E-commerce Fraud Detection  
-- Payment Gateway Security  
+---
+
+## 📦 Files
+
+```
+algorithm_visualizer/
+├── index.html   — Main UI structure
+├── style.css    — Dark futuristic theme
+├── app.js       — All algorithm logic + canvas rendering
+└── server.py    — Python HTTP server
+```
+
+---
+
+## 🔢 Sorting Algorithms
+
+| Algorithm      | Best       | Average    | Worst      | Space    | Stable |
+|---------------|------------|------------|------------|----------|--------|
+| Bubble Sort    | O(n)       | O(n²)      | O(n²)      | O(1)     | Yes    |
+| Selection Sort | O(n²)      | O(n²)      | O(n²)      | O(1)     | No     |
+| Insertion Sort | O(n)       | O(n²)      | O(n²)      | O(1)     | Yes    |
+| Merge Sort     | O(n log n) | O(n log n) | O(n log n) | O(n)     | Yes    |
+
+## 🔍 Searching Algorithms
+
+| Algorithm            | Best   | Average     | Worst    | Requires Sorted |
+|---------------------|--------|-------------|----------|----------------|
+| Linear Search        | O(1)   | O(n)        | O(n)     | No             |
+| Binary Search        | O(1)   | O(log n)    | O(log n) | Yes            |
+
+---
+
+## 🎮 Controls
+
+- **NEW ARRAY** — Regenerate a random array
+- **▶ SORT / ▶ SEARCH** — Start the animation
+- **■ STOP** — Halt the animation mid-run
+- **Array Size** — Adjust number of elements (10–120)
+- **Speed** — Control animation speed (1=slow, 10=fast)
+- **Target (search)** — Leave blank for a random target
+
+## 🎨 Color Legend
+
+**Sorting:**
+- 🟦 Default bar
+- 🟡 Comparing
+- 🔴 Swapping
+- 🟢 Sorted
+- 🟣 Pivot
+
+**Searching:**
+- 🟦 Default / Search range
+- 🟡 Currently checking
+- 🟢 Found
+- ⬛ Discarded
+
+---
+
+## Requirements
+
+- Python 3.6+
+- Any modern web browser (Chrome, Firefox, Edge, Safari)
+- No external dependencies needed
